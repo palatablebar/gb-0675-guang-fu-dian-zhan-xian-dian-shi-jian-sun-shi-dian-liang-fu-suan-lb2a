@@ -5,4 +5,14 @@ if(filePicker){
  filePicker.addEventListener('change',async()=>{const file=filePicker.files[0];if(!file)return;if(file.size>2000000){editor.value='';alert('文件超过2MB，请缩小后导入');return;}const bytes=await file.arrayBuffer();try{editor.value=new TextDecoder('utf-8',{fatal:true}).decode(bytes);}catch(e){editor.value=new TextDecoder('gb18030',{fatal:true}).decode(bytes);}});
  document.querySelector('#import-csv').addEventListener('click',async event=>{event.target.disabled=true;try{const response=await fetch('/api/runs',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({csv_text:editor.value})});const data=await response.json();if(!response.ok)throw Error(data.detail);location.href=location.pathname+'?run_id='+data.manifest.run_id;}catch(e){editor.setCustomValidity(e.message);editor.reportValidity();}finally{event.target.disabled=false;}});
  editor.addEventListener('input',()=>editor.setCustomValidity(''));
+ }
+const finalizeBtn=document.querySelector('#finalize-claim');
+if(finalizeBtn){
+ const runId=document.body.dataset.runId;
+ const post=async url=>{const r=await fetch(url,{method:'POST'});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.detail||'操作失败');return d;};
+ finalizeBtn.addEventListener('click',async()=>{finalizeBtn.disabled=true;try{const d=await post('/api/runs/'+runId+'/claim/finalize');status.textContent='已定稿 '+d.ledger.length+' 条台账记录';}catch(e){status.textContent=e.message;}finally{finalizeBtn.disabled=false;}});
+ document.querySelector('#confirm-claim').addEventListener('click',async()=>{try{const d=await post('/api/runs/'+runId+'/claim/confirm');status.textContent='已确认 '+d.confirmed_rows+' 条，重跑不再重复占用额度';}catch(e){status.textContent=e.message;}});
+ const box=document.querySelector('#contract-box');
+ const renderContracts=async()=>{const r=await fetch('/api/contracts');const d=await r.json();box.innerHTML='<p>当前激活：<b>'+d.active.version+'</b>（'+d.active.title+'，封顶 '+d.active.monthly_cap_cny+' 元，电价 '+d.active.price_per_kwh+' 元/kWh）</p>'+d.registry.map(c=>'<div class="contract-row"><span>'+c.version+' · '+c.title+' · 封顶'+c.monthly_cap_cny+'元 · '+(c.active?'<b>激活中</b>':'<button data-version="'+c.version+'">切换</button>')+'</span></div>').join('');box.querySelectorAll('button[data-version]').forEach(b=>b.addEventListener('click',async()=>{b.disabled=true;try{const rr=await fetch('/api/contracts/activate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({version:b.dataset.version})});const dd=await rr.json();if(!rr.ok)throw Error(dd.detail);status.textContent='合同已切换至 '+dd.version+'，请按新规则重算受影响事件';renderContracts();}catch(e){status.textContent='切换失败，已恢复旧版：'+e.message;b.disabled=false;}}));};
+ renderContracts();
 }

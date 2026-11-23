@@ -1,0 +1,60 @@
+{% extends 'base.html' %}{% block content %}
+<section class="panel">
+  <div class="panel__head"><h2>月度可申报补偿构成</h2><span>{{ state.claim.rows|length }} 个事件 · 合同 {{ state.claim.contract.version }}</span></div>
+  <div class="table-scroll"><table>
+    <thead><tr><th>月份</th><th>事件</th><th>设备</th><th>开始 UTC</th><th>时长 s</th><th>已确认损失 kWh</th><th>电价 元/kWh</th><th>应补偿 元</th><th>可申报 元</th><th>未覆盖余额 元</th><th>裁定后额度余额 元</th><th>裁定</th><th>裁定依据</th></tr></thead>
+    <tbody>
+    {% for row in state.claim.rows %}
+      <tr class="claim-{{ row.status }}">
+        <td>{{ row.month }}</td><td>{{ row.event_id }}</td><td>{{ row.device }}</td><td>{{ row.start }}</td>
+        <td>{{ row.seconds }}</td><td>{{ '%.4f'|format(row.confirmed_loss_kwh|float) }}</td>
+        <td>{{ state.claim.contract.price }}</td>
+        <td>{{ row.due_cny }}</td>
+        <td>{% if row.claim_cny is none %}<span class="unknown">不占用</span>{% else %}<b>{{ row.claim_cny }}</b>{% endif %}</td>
+        <td>{% if row.uncovered_cny is none %}—{% else %}{{ row.uncovered_cny }}{% endif %}</td>
+        <td>{% if row.cap_remaining_after_cny is none %}—{% else %}{{ row.cap_remaining_after_cny }}{% endif %}</td>
+        <td><span class="tag tag-{{ row.status }}">{{ row.status }}</span></td><td title="{{ row.reason }}">{{ row.reason }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+<div class="grid">
+  <section class="panel">
+    <div class="panel__head"><h2>月度额度占用对账</h2><span>按合同版本分列</span></div>
+    <div class="table-scroll"><table>
+      <thead><tr><th>月份</th><th>合同版本</th><th>电价 元/kWh</th><th>已确认损失 kWh</th><th>应补偿 元</th><th>可申报/额度占用 元</th><th>月度封顶 元</th><th>额度余额 元</th><th>未覆盖 元</th><th>守恒</th></tr></thead>
+      <tbody>
+      {% for m in state.claim.months %}
+        <tr><td>{{ m.month }}</td><td>{{ m.contract_version }}</td><td>{{ m.price_per_kwh }}</td>
+        <td>{{ m.confirmed_loss_kwh }}</td><td>{{ m.due_cny }}</td><td><b>{{ m.claim_cny }}</b></td>
+        <td>{{ m.cap_cny }}</td><td>{{ m.cap_remaining_cny }}</td><td>{{ m.uncovered_cny }}</td>
+        <td>{% if m.balanced %}<span class="tag tag-全额覆盖">通过</span>{% else %}<span class="tag tag-未覆盖">失衡</span>{% endif %}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+    <div class="claim-actions">
+      <button class="claim-btn" id="finalize-claim">定稿入台账</button>
+      <button class="claim-btn" id="confirm-claim">确认已申报记录</button>
+      <a class="export" href="/api/claim-ledger">查看月度台账</a>
+    </div>
+  </section>
+  <section class="panel">
+    <div class="panel__head"><h2>待查事件（未获覆盖）</h2><span>{{ state.claim.months|sum(attribute='pending_events') }} 个</span></div>
+    <div class="table-scroll"><table>
+      <thead><tr><th>事件</th><th>设备</th><th>月份</th><th>已定损失 kWh</th><th>未定片段</th><th>未定时长 s</th><th>原因</th></tr></thead>
+      <tbody>
+      {% for row in state.claim.rows if row.status=='待查' %}
+        <tr><td>{{ row.event_id }}</td><td>{{ row.device }}</td><td>{{ row.month }}</td>
+        <td>{{ '%.4f'|format(row.confirmed_loss_kwh|float) }}</td><td>{{ row.unknown_segments }}</td>
+        <td>{{ row.unknown_seconds }}</td><td>{{ row.reason }}</td></tr>
+      {% else %}<tr><td>无待查事件，全部事件损失已确认。</td></tr>{% endfor %}
+      </tbody>
+    </table></div>
+  </section>
+</div>
+<section class="panel">
+  <div class="panel__head"><h2>合同规则与切换</h2><span>切换失败自动恢复旧版</span></div>
+  <div id="contract-box" class="contract-box"><p>加载合同版本中…</p></div>
+</section>
+{% endblock %}

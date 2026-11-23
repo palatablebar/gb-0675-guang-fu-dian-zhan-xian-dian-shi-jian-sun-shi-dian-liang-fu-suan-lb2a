@@ -13,6 +13,7 @@
 | M5 损失核算 | 执行并复核损失核算 | `POST /api/loss` | `app/modules/loss/rules.py` | `tests/test_loss.py` |
 | M6 能量对账 | 执行并复核能量对账 | `POST /api/reconcile` | `app/modules/reconcile/rules.py` | `tests/test_reconcile.py` |
 | M7 运行归档 | 执行并复核运行归档 | `POST /api/archive` | `app/modules/archive/rules.py` | `tests/test_archive.py` |
+| M8 月度补偿 | 按合同封顶裁定月度申报并维护占用台账 | `POST /api/claim` | `app/modules/claim/rules.py`、`app/store.py` | `tests/test_claim_rules.py`、`tests/test_claim_store.py` |
 
 ## 陷阱登记
 
@@ -29,6 +30,10 @@
 | TRAP-06 | 全角千分位 | 静默错算或证据丢失 | 以可复核规则显式处理 | `app/modules/devices/rules.py` | `tests/test_devices.py::test_fullwidth_number` |
 | TRAP-11 | UTC归一 | 静默错算或证据丢失 | 以可复核规则显式处理 | `app/modules/devices/rules.py` | `tests/test_devices.py::test_time_equivalence` |
 | TRAP-23 | 限电区间并集 | 静默错算或证据丢失 | 以可复核规则显式处理 | `app/modules/slicing/rules.py` | `tests/test_slicing.py::test_overlapping_real` |
+| TRAP-31 | 封顶额度被逐事件四舍五入撑破 | 申报合计超过合同额度 | 金额按整数分记账，额度只减不增，分账守恒校验 | `app/modules/claim/rules.py` | `tests/test_claim_rules.py::test_money_rounded_in_cents_never_breaks_cap` |
+| TRAP-32 | 重跑重复占用月度额度 | 同事件二次占用封顶 | 台账按批次+月份+事件幂等写入，已确认行保留 | `app/store.py` | `tests/test_claim_store.py::test_finalize_idempotent_rerun_keeps_single_occupation` |
+| TRAP-33 | 额度切换中途失败留下混合版本 | 台账错配新旧合同 | 事务化切换并校验，失败回滚旧激活版本 | `app/store.py` | `tests/test_claim_store.py::test_switch_failure_rolls_back_to_old_version` |
+| TRAP-34 | 未定事件按部分损失申报 | 未确认损失被填数索赔 | 含未定片段事件整体待查，不占用额度 | `app/modules/claim/rules.py` | `tests/test_claim_rules.py::test_dirty_pending_event_does_not_occupy_cap` |
 
 ## 对账规则
 

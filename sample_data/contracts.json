@@ -1,0 +1,21 @@
+{
+  "active": "C-2026-09",
+  "contracts": {
+    "C-2026-09": {
+      "version": "C-2026-09",
+      "title": "2026年度限电补偿合同（秋季版）",
+      "price_per_kwh": "0.45",
+      "monthly_cap_cny": "8.00",
+      "currency": "CNY",
+      "note": "月度申报补偿不得超过封顶额度，先确认先占用"
+    },
+    "C-2026-10": {
+      "version": "C-2026-10",
+      "title": "2026年度限电补偿合同（修订版）",
+      "price_per_kwh": "0.50",
+      "monthly_cap_cny": "10.00",
+      "currency": "CNY",
+      "note": "电价修订，受影响事件按新版本重算"
+    }
+  }
+}

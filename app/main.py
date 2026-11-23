@@ -48,5 +48,22 @@ def review(run_id:str,payload:dict=Body(...)):
 def export(run_id:str):
     result=store.get(DB_PATH,run_id)
     return Response(serialize(result),media_type='application/zip',headers={'Content-Disposition':f'attachment; filename="{run_id}.zip"'})
+@app.get('/api/contracts')
+def contracts():
+    return {'active':store.active_contract(DB_PATH),'registry':store.contracts(DB_PATH)}
+@app.post('/api/contracts/activate')
+def activate_contract(payload:dict=Body(...)):
+    version=payload.get('version')
+    if not isinstance(version,str) or not version.strip(): raise BusinessError('BAD_CONTRACT','合同版本号无效')
+    return store.switch_contract(DB_PATH,version.strip())
+@app.post('/api/runs/{run_id}/claim/finalize')
+def finalize_claim(run_id:str):
+    return {'run_id':run_id,'ledger':store.finalize_claim(DB_PATH,run_id)}
+@app.post('/api/runs/{run_id}/claim/confirm')
+def confirm_claim(run_id:str):
+    return store.confirm_claim(DB_PATH,run_id)
+@app.get('/api/claim-ledger')
+def claim_ledger(month:str|None=None):
+    return {'rows':store.claim_ledger(DB_PATH,month=month),'occupation':store.month_occupation(DB_PATH)}
 for key in MODULES:
     app.include_router(import_module(f'app.modules.{key}.handler').router)

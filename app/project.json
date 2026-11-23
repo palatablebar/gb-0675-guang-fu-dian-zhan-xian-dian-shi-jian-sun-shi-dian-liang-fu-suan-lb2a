@@ -10,7 +10,8 @@
     "基线拟合",
     "损失核算",
     "能量对账",
-    "运行归档"
+    "运行归档",
+    "月度补偿"
   ],
   "rule": "仅用有效对照逆变器和相同辐照区间拟合基线；重叠限电事件先求并集再积分",
   "lane": "L10",
@@ -29,7 +30,8 @@
     "baseline",
     "loss",
     "reconcile",
-    "archive"
+    "archive",
+    "claim"
   ],
   "labels": {
     "id": "证据号",
@@ -67,6 +69,25 @@
     "unknown_seconds": "未定 s",
     "line": "原始行",
     "_line": "原始行",
-    "detail": "原因"
+    "detail": "原因",
+    "event_id": "事件",
+    "month": "月份",
+    "confirmed_loss_kwh": "已确认损失 kWh",
+    "unknown_segments": "未定片段",
+    "unknown_seconds": "未定 s",
+    "contract_version": "合同版本",
+    "due_cny": "应补偿 元",
+    "claim_cny": "可申报 元",
+    "uncovered_cny": "未覆盖余额 元",
+    "cap_remaining_after_cny": "裁定后额度余额 元",
+    "status": "裁定",
+    "reason": "裁定依据",
+    "cap_cny": "月度封顶 元",
+    "cap_used_cny": "额度占用 元",
+    "cap_remaining_cny": "额度余额 元",
+    "pending_events": "待查事件",
+    "pending_loss_kwh": "待查损失 kWh",
+    "price_per_kwh": "电价 元/kWh",
+    "segments": "片段数"
   }
 }

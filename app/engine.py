@@ -2,11 +2,11 @@ from importlib import import_module
 from pathlib import Path
 from copy import deepcopy
 import json, time, base64
-from app.config import ROOT, MODULES, MAX_BYTES
+from app.config import ROOT, MODULES, MAX_BYTES, load_contracts
 from app.errors import BusinessError
 from app.manifest import digest, make_manifest
 
-def evaluate(payload=None, until=7, snapshot=None):
+def evaluate(payload=None, until=8, snapshot=None):
     payload=payload or {}
     dataset=payload.get('dataset','dirty')
     if dataset not in {'dirty','clean','legacy'}: raise BusinessError('BAD_DATASET','样例名称无效')
@@ -15,6 +15,8 @@ def evaluate(payload=None, until=7, snapshot=None):
     if len(raw)>MAX_BYTES: raise BusinessError('TOO_LARGE','文件超过2MB',413)
     context=deepcopy(snapshot['context']) if snapshot is not None else json.loads((ROOT/'sample_data/context.json').read_text())
     context.update(deepcopy(payload.get('overrides',{})))
+    # 合同规则随批次固化：未显式覆盖时取登记处当前激活版本，重放快照不受后续切换影响。
+    context.setdefault('contract', deepcopy(load_contracts()['contracts'][load_contracts()['active']]))
     start=time.perf_counter()
     state={'raw_bytes':raw,'context':context,'records':[],'quarantine':[], 'counts':{},'views':{},'source':dataset}
     for index,key in enumerate(MODULES,1):
